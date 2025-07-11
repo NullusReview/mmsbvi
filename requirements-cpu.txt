@@ -32,8 +32,6 @@ matplotlib==3.8.2
 mdurl==0.1.2
 memory-profiler==0.61.0
 ml_dtypes==0.5.1
-# Editable install with no version control (mmsbvi==0.1.0)
--e /Users/willet/Downloads/SB VI
 mypy==1.16.1
 mypy_extensions==1.1.0
 numpy==1.26.3
