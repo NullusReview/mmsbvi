@@ -1,0 +1,58 @@
+# MMSBVI GPU Environment (CUDA RTX 3090 / A100)
+# For accelerated numerical experiments
+
+# Core JAX with CUDA 12 Support
+jax[cuda12]==0.4.25
+
+# Optimal Transport & Optimization
+ott-jax==0.4.5    # Google's optimal transport library
+optax==0.1.9
+
+# MCMC Baseline
+blackjax>=1.0.0
+
+# JAX Ecosystem
+chex==0.1.85
+diffrax==0.5.1
+jaxtyping==0.2.25
+
+# Scientific Computing
+numpy==1.26.3
+scipy==1.12.0
+
+# Visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.17.0
+
+# Experiment Management
+hydra-core==1.3.2
+wandb==0.16.1
+
+# Development & Testing
+pytest>=7.0.0
+pytest-xdist>=3.0.0
+
+# Performance Monitoring
+psutil==5.9.6
+memory-profiler==0.61.0
+py-spy==0.3.14
+
+# GPU Memory Profiling
+gpustat>=1.1.0
+nvidia-ml-py>=12.0.0
+
+# Tensor Operations
+einops==0.7.0
+
+# Rich CLI Output
+rich==13.7.0
+
+# Type Checking
+mypy>=1.0.0
+
+# Utilities
+packaging>=23.2
+
+# CUDA Optimization
+numba>=0.59.0

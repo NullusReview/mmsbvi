@@ -1,0 +1,15 @@
+name: mmsbvi
+channels:
+  - defaults
+  - conda-forge
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - scipy
+  - matplotlib
+  - seaborn
+  - pip:
+      - -r requirements-cpu.txt
