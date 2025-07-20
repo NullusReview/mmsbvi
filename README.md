@@ -23,12 +23,33 @@ The core of this repository is a 1D prototype designed for the precise mathemati
 ## Installation
 
 ### Environment Setup
+
 We use `pip` for managing dependencies. To set up the environment, run:
 
 ```bash
 # Install dependencies (CPU version is sufficient for all experiments)
 pip install -r requirements-cpu.txt
 ```
+
+### Core Dependencies
+
+The framework includes support for both 1D theoretical validation and extensible high-dimensional neural solvers:
+
+**Core JAX Ecosystem:**
+- **JAX 0.6.2**: High-performance computing framework
+- **JAXLib 0.6.2**: JAX backend implementation
+- **NumPy 1.26.3**: Numerical computing foundation
+
+**Neural Architecture Components:**
+- **Flax 0.8.5**: Neural network architecture for Föllmer drift parametrization  
+- **Optax 0.1.9**: Gradient-based optimization framework
+- **Chex 0.1.85**: Reliable JAX testing and debugging utilities
+- **Einops 0.7.0**: Tensor operations with readable notation
+
+**Scientific Computing:**
+- **SciPy 1.12.0**: Scientific computing algorithms
+- **OTT-JAX 0.4.5**: Optimal transport computations
+- **BlackJAX 1.2.5**: MCMC sampling (for baseline comparisons)
 
 ### Core Tests
 To confirm that the environment is set up correctly, run the core test suite:
@@ -82,15 +103,30 @@ The project is structured to separate the core algorithms from the experimental 
 src/mmsbvi/
 ├── core/                    # Core type definitions and configurations
 │   ├── types.py            # Main data structures (Grid1D, MMSBProblem, etc.)
+│   └── registry.py         # Component registry for pluggable architecture
 ├── algorithms/              # Core algorithm implementations
 │   ├── ipfp_1d.py          # 1D Multi-Marginal IPFP main algorithm
+│   ├── control_grad.py     # Primal-Control Gradient Flow solver 
+│   └── score_sb.py         # Score-based Schrödinger Bridge (placeholder)
 ├── solvers/                 # Numerical solvers
 │   ├── pde_solver_1d.py    # Onsager-Fokker PDE solver
-│   ├── gaussian_kernel_1d.py # OU transition kernel computation
+│   └── gaussian_kernel_1d.py # OU transition kernel computation
+├── integrators/             # SDE numerical integration methods 
+│   └── integrators.py      # Euler, Heun, Milstein, AMED-Euler schemes
+├── nets/                    # Neural network architectures 
+│   └── flax_drift.py       # Flax-based Föllmer drift networks
 ├── utils/                   # Utility functions
+│   ├── logger.py           # Logging system
+│   └── config.py           # YAML configuration management 
+├── configs/                 # Configuration files 
+│   ├── baseline.yaml       # Default configuration
+│   ├── lorenz_cfg.yaml     # Lorenz system configuration
+│   └── physionet_cfg.yaml  # PhysioNet dataset configuration
+├── cli/                     # Command line interface 
+│   └── train.py            # Unified training entry point
 └── visualization/           # Visualization modules
 
-experiments/                 # Scripts to generate paper figures
+theoretical_verification/    # 1D theoretical validation experiments
 tests/                       # Unit and integration tests for validation
 automation/                  # Shell scripts for running validation workflows
 ```

@@ -31,4 +31,9 @@ __all__ = [
     "algorithms",
     "visualization",
     "utils",
+    # New modules (placeholders)
+    # 新模块（占位符）
+    # "integrators",
+    # "nets", 
+    # "cli",
 ]

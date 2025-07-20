@@ -1,0 +1,17 @@
+# Lorenz System Configuration
+# 洛伦兹系统配置
+
+# System parameters
+system:
+  type: "lorenz"
+  sigma: 10.0
+  rho: 28.0
+  beta: 2.667
+
+# Problem setup
+problem:
+  dimension: 3
+  time_horizon: 2.0
+  num_marginals: 5
+
+# TODO: Add Lorenz-specific solver configuration

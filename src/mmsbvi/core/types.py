@@ -9,8 +9,10 @@ This module defines the core data types and type annotations used throughout the
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Protocol, Tuple, TypeVar, Union
 from jax import Array
 import jax.numpy as jnp
+import jax.random
 from jaxtyping import Array as JArray, Float, Int
 import chex
+import flax
 
 # Type aliases for clarity / 类型别名
 Scalar = Union[float, Float[Array, ""]]
@@ -32,6 +34,20 @@ TimeSteps = Int[Array, "k"]
 DensityFunction = Callable[[Float[Array, "n"]], Float[Array, "n"]]
 PotentialFunction = Callable[[Float[Array, "n"]], Float[Array, "n"]]
 KernelFunction = Callable[[Float[Array, "n"], Float[Array, "n"], Scalar], Scalar]
+
+# SDE Function types / SDE函数类型
+SDEState = Float[Array, "d"]  # SDE状态向量 / SDE state vector
+DriftFunction = Callable[[SDEState, float], SDEState]  # 漂移函数 μ(x,t) / drift function μ(x,t)
+DiffusionFunction = Callable[[SDEState, float], SDEState]  # 扩散函数 σ(x,t) / diffusion function σ(x,t)
+DiffusionDerivative = Callable[[SDEState, float], SDEState]  # 扩散导数 ∂σ/∂x / diffusion derivative ∂σ/∂x
+NoiseTerms = Float[Array, "d"]  # 布朗运动噪声项 / Brownian motion noise terms
+
+# Neural Network types / 神经网络类型
+NetworkParams = Dict[str, Any]  # Flax parameter tree / Flax参数树
+DriftNetworkFunction = Callable[[SDEState, float, NetworkParams], SDEState]  # 神经网络漂移函数
+TimeEncoding = Float[Array, "encoding_dim"]  # 时间编码 / Time encoding
+BatchStates = Float[Array, "batch_size d"]  # 批量状态 / Batch states
+BatchTimes = Float[Array, "batch_size"]  # 批量时间 / Batch times
 
 # ============================================================================
 # Data Structures / 数据结构
@@ -114,6 +130,10 @@ class MMSBProblem:
                 for i in range(len(self.observation_times) - 1)]
 
 
+# Forward declaration placeholder for SDEProblem
+# Will be defined after SDEIntegratorConfig
+
+
 @chex.dataclass
 class MMSBSolution:
     """
@@ -169,6 +189,117 @@ class PDESolverConfig:
     boundary_condition: str = "neumann"  # 边界条件 / Boundary condition
 
 
+@chex.dataclass
+class SDEIntegratorConfig:
+    """
+    Configuration for SDE integrators
+    SDE积分器配置
+    """
+    method: str = "euler_maruyama"  # 积分方法 / Integration method
+    adaptive: bool = False  # 自适应步长 / Adaptive step size
+    rtol: float = 1e-3  # 相对容差 / Relative tolerance
+    atol: float = 1e-6  # 绝对容差 / Absolute tolerance
+    max_steps: int = 10000  # 最大步数 / Maximum steps
+    dt_min: float = 1e-8  # 最小步长 / Minimum step size
+    dt_max: float = 1e-1  # 最大步长 / Maximum step size
+    save_at: Optional[Float[Array, "k"]] = None  # 保存时间点 / Save time points
+
+
+@chex.dataclass
+class NetworkConfig:
+    """
+    Configuration for neural networks
+    神经网络配置
+    """
+    hidden_dims: List[int] = (256, 256, 256)  # 隐藏层维度 / Hidden layer dimensions
+    n_layers: int = 4  # 网络层数 / Number of layers
+    activation: str = "silu"  # 激活函数 / Activation function
+    use_attention: bool = True  # 是否使用注意力 / Use attention mechanism
+    dropout_rate: float = 0.1  # Dropout率 / Dropout rate
+    time_encoding_dim: int = 128  # 时间编码维度 / Time encoding dimension
+    use_spectral_norm: bool = True  # 谱归一化 / Spectral normalization
+    use_residual: bool = True  # 残差连接 / Residual connections
+    use_layer_norm: bool = True  # 层归一化 / Layer normalization
+    precision: str = "float32"  # 计算精度 / Computation precision
+    
+
+@chex.dataclass
+class TrainingConfig:
+    """
+    Configuration for training
+    训练配置
+    """
+    batch_size: int = 256  # 批量大小 / Batch size
+    learning_rate: float = 3e-4  # 学习率 / Learning rate
+    num_epochs: int = 1000  # 训练轮数 / Number of epochs
+    gradient_clip_norm: float = 1.0  # 梯度裁剪 / Gradient clipping
+    use_mixed_precision: bool = True  # 混合精度训练 / Mixed precision training
+    accumulate_gradients: int = 1  # 梯度累积步数 / Gradient accumulation steps
+    warmup_steps: int = 1000  # 预热步数 / Warmup steps
+    decay_schedule: str = "cosine"  # 学习率衰减 / Learning rate decay
+    checkpoint_every: int = 1000  # 检查点保存间隔 / Checkpoint saving interval
+
+
+@chex.dataclass  
+class SDEProblem:
+    """
+    SDE problem specification
+    SDE问题规范
+    """
+    initial_state: SDEState  # 初始状态 / Initial state
+    drift_fn: DriftFunction  # 漂移函数 / Drift function
+    diffusion_fn: DiffusionFunction  # 扩散函数 / Diffusion function
+    time_span: Tuple[float, float]  # 时间区间 / Time span
+    config: SDEIntegratorConfig  # 积分器配置 / Integrator configuration
+    
+    # 可选的高级特性 / Optional advanced features
+    diffusion_derivative: Optional[DiffusionDerivative] = None  # 扩散导数 / Diffusion derivative
+    save_at: Optional[Float[Array, "k"]] = None  # 保存时间点 / Save time points
+
+
+@chex.dataclass
+class NetworkTrainingState:
+    """
+    Training state for neural networks
+    神经网络训练状态
+    """
+    params: NetworkParams  # 网络参数 / Network parameters
+    optimizer_state: Any  # 优化器状态 / Optimizer state
+    step: int  # 训练步数 / Training step
+    best_loss: float  # 最佳损失 / Best loss
+    metrics: Dict[str, float]  # 训练指标 / Training metrics
+    
+    def update(self, **kwargs) -> "NetworkTrainingState":
+        """Update training state / 更新训练状态"""
+        return self.replace(**kwargs)
+
+
+# ============================================================================ 
+# Performance and GPU Optimization Types / 性能和GPU优化类型
+# ============================================================================
+
+@chex.dataclass
+class PerformanceConfig:
+    """
+    Configuration for performance optimization
+    性能优化配置
+    """
+    use_jit: bool = True  # JIT编译 / JIT compilation
+    use_vmap: bool = True  # 向量化 / Vectorization
+    use_pmap: bool = False  # 多设备并行 / Multi-device parallelism
+    use_scan: bool = True  # 高效循环 / Efficient loops
+    use_checkpointing: bool = True  # 梯度检查点 / Gradient checkpointing
+    memory_efficient: bool = True  # 内存效率 / Memory efficiency
+    cache_time_encoding: bool = True  # 缓存时间编码 / Cache time encoding
+    max_batch_size: int = 1024  # 最大批量大小 / Maximum batch size
+    num_devices: int = 1  # 设备数量 / Number of devices
+    device_batch_size: Optional[int] = None  # 每设备批量大小 / Per-device batch size
+    
+    def __post_init__(self):
+        if self.device_batch_size is None:
+            self.device_batch_size = self.max_batch_size // self.num_devices
+
+
 # ============================================================================
 # Protocols for Extensibility / 扩展性协议
 # ============================================================================
@@ -194,4 +325,114 @@ class Kernel(Protocol):
     
     def log_kernel(self, x: Grid1D, y: Grid1D, dt: Scalar) -> Matrix:
         """Log of transition kernel / 转移核的对数"""
+        ...
+
+
+class SDEIntegrator(Protocol):
+    """
+    Protocol for SDE numerical integrators
+    SDE数值积分器协议
+    
+    Provides unified interface for different SDE integration schemes.
+    为不同的SDE积分格式提供统一接口。
+    """
+    
+    def step(
+        self,
+        t: float,
+        state: SDEState,
+        drift_fn: DriftFunction,
+        diffusion_fn: DiffusionFunction,
+        dt: float,
+        key: jax.random.PRNGKey
+    ) -> SDEState:
+        """
+        Single integration step
+        单步积分
+        
+        Args:
+            t: Current time / 当前时间
+            state: Current state / 当前状态
+            drift_fn: Drift function μ(x,t) / 漂移函数 μ(x,t)
+            diffusion_fn: Diffusion function σ(x,t) / 扩散函数 σ(x,t)
+            dt: Time step / 时间步长
+            key: Random key for noise / 噪声随机密钥
+            
+        Returns:
+            new_state: Updated state / 更新后的状态
+        """
+        ...
+    
+    def integrate(
+        self,
+        initial_state: SDEState,
+        drift_fn: DriftFunction,
+        diffusion_fn: DiffusionFunction,
+        time_grid: Float[Array, "n"],
+        key: jax.random.PRNGKey
+    ) -> Float[Array, "n d"]:
+        """
+        Multi-step integration
+        多步积分
+        
+        Args:
+            initial_state: Initial condition / 初始条件
+            drift_fn: Drift function / 漂移函数
+            diffusion_fn: Diffusion function / 扩散函数
+            time_grid: Time points / 时间网格
+            key: Random key / 随机密钥
+            
+        Returns:
+            trajectory: State trajectory / 状态轨迹
+        """
+        ...
+
+
+class DriftNetwork(Protocol):
+    """
+    Protocol for neural drift networks
+    神经网络漂移协议
+    
+    Provides interface for Föllmer drift neural networks.
+    为Föllmer漂移神经网络提供接口。
+    """
+    
+    def __call__(
+        self,
+        x: SDEState,
+        t: float,
+        train: bool = False
+    ) -> SDEState:
+        """
+        Compute drift μ(x,t)
+        计算漂移 μ(x,t)
+        
+        Args:
+            x: State vector / 状态向量
+            t: Time / 时间
+            train: Training mode / 训练模式
+            
+        Returns:
+            drift: Drift vector μ(x,t) / 漂移向量
+        """
+        ...
+    
+    def batch_call(
+        self,
+        x_batch: BatchStates,
+        t_batch: BatchTimes,
+        train: bool = False
+    ) -> BatchStates:
+        """
+        Batch computation of drift
+        批量计算漂移
+        
+        Args:
+            x_batch: Batch of states / 状态批量
+            t_batch: Batch of times / 时间批量
+            train: Training mode / 训练模式
+            
+        Returns:
+            drift_batch: Batch of drifts / 漂移批量
+        """
         ...
