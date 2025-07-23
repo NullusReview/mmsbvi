@@ -1,28 +1,34 @@
 """
-无味卡尔曼滤波基线模块 / Unscented Kalman Filter Baseline Module
-===========================================================
+UKF (Unscented Kalman Filter) Package / 无迹卡尔曼滤波器包
+=======================================================
 
-实现针对大角度单摆系统的UKF平滑器，包括：
-- Sigma点生成和权重计算
-- 无味变换（Unscented Transform）
-- 前向滤波和后向平滑
-- 周期性角度处理
-- 数值稳定性保证
-- 性能评估接口
+高效、通用的无迹卡尔曼滤波器实现，支持任意非线性系统。
+Efficient, generic Unscented Kalman Filter implementation supporting arbitrary nonlinear systems.
 
-Implements UKF smoother for large angle pendulum system, including:
-- Sigma point generation and weight computation
-- Unscented Transform
-- Forward filtering and backward smoothing
-- Periodic angle handling
-- Numerical stability guarantees
-- Performance evaluation interface
+Key Features / 主要特性:
+- 通用系统接口 / Generic system interface
+- GPU并行批处理 / GPU parallel batch processing  
+- 数值稳定性保证 / Numerical stability guarantees
+- 内存高效实现 / Memory-efficient implementation
+- 向后兼容原始API / Backward compatible with original API
 """
 
-from .ukf_smoother import PendulumUKFSmoother, UKFState, UKFResult
+# 主要接口 / Main interfaces
+from .ukf import GenericUKF, create_pendulum_ukf
+
+# 配置和数据结构 / Configuration and data structures
+from .config import UKFConfig, UKFState, UKFResult
+
+# Note: Original PendulumUKFSmoother has been integrated into GenericUKF
+# Use create_pendulum_ukf() for pendulum-specific functionality
 
 __all__ = [
-    "PendulumUKFSmoother",
-    "UKFState", 
-    "UKFResult"
+    # 主要接口 / Main interfaces
+    'GenericUKF',
+    'create_pendulum_ukf',
+    
+    # 配置和数据结构 / Configuration and data structures
+    'UKFConfig',
+    'UKFState', 
+    'UKFResult'
 ]
