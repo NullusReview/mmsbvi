@@ -1,99 +1,100 @@
 <div align="center">
-<h1>MMSBVI</h1>
-<h2>Multi-Marginal Schrödinger Bridge Variational Inference</h2>
+<h1>MMSBVI: Multi-Marginal Schrödinger Bridge Variational Inference</h1>
+<h3>Multi-Marginal Schrödinger Bridge Variational Inference</h3>
 </div>
 
-<p align="center"><a href="README_CN.md">中文</a></p>
-
-This repository contains the official JAX implementation for the ICLR 2026 paper: *Geometric Variational Inference via Multi-Marginal Schrödinger Bridge*. This work provides a rigorous mathematical validation framework demonstrating the theoretical equivalence between path-space variational inference and multi-marginal optimal transport.
-
-The core of this repository is a 1D prototype designed for the precise mathematical validation of our theoretical claims.
-
----
-
-## Index
-
-1. [Installation](#installation)
-2. [Reproducing Experiments](#reproducing-experiments)
-3. [Code Structure](#code-structure)
-4. [Reference](#reference)
+<p align="center">
+  <a href="#core-concepts">Core Concepts</a> •
+  <a href="#architectural-highlights">Architectural Highlights</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#reproducing-validation">Reproducing Validation</a> •
+  <a href="#code-structure">Code Structure</a>
+</p>
 
 ---
+
+This repository contains the JAX implementation for the ICLR 2026 paper, ***Geometric Variational Inference via Multi-Marginal Schrödinger Bridge***. This project provides a framework for exploring and validating the theoretical duality between Variational Inference in Path Space and Multi-Marginal Optimal Transport.
+
+## Core Concepts
+
+The **Multi-Marginal Schrödinger Bridge (MMSB)** problem seeks to find a stochastic process whose marginal distributions at several specified time points match a series of given target distributions. This is achieved while minimizing the Kullback-Leibler (KL) divergence of the process's path measure with respect to a prior reference process (typically Brownian motion or an Ornstein-Uhlenbeck process).
+
+Formally, given a series of target marginals $\rho_0, \rho_1, \dots, \rho_K$ at time points $t_0, t_1, \dots, t_K$, we seek a path measure $\mathbb{P}$ that solves the following optimization problem:
+
+$$
+\mathbb{P}^* = \arg\min_{\mathbb{P}} \text{KL}(\mathbb{P} || \mathbb{Q}) \quad \text{s.t.} \quad X_{t_k} \sim \rho_k, \forall k \in \{0, \dots, K\}
+$$
+
+where $\mathbb{Q}$ is the path measure of a prior reference process (e.g., an OU process). This problem is equivalent to a stochastic control problem, and its solution is characterized by a system of coupled, nonlinear partial differential equations known as the Schrödinger system.
+
+This project explores two paradigms for solving this problem:
+1.  **Classical Numerical Methods**: Solving the dual problem on a discrete grid via the Iterative Proportional Fitting Procedure (IPFP).
+2.  **Modern Machine Learning Methods**: Reformulating the problem as one of stochastic control and parameterizing the control policy with a neural network for end-to-end optimization.
+
+## Architectural Highlights
+
+The architecture of this project integrates principles of academic research with modern machine learning engineering.
+
+1.  **Dual-Core Solver Architecture**
+    *   **Classical Grid Solver (`ipfp_1d.py`)**: An Iterative Proportional Fitting Procedure (IPFP) based on the Sinkhorn algorithm. It provides a high-precision solution for low-dimensional problems, which is used for theoretical validation.
+    *   **Neural Control Solver (`control_grad.py`)**: Reformulates the MMSB problem as a stochastic control task. It uses a neural network (`FöllmerDriftNet`) to parameterize the drift term of a Stochastic Differential Equation (SDE) and performs end-to-end optimization via variational inference. This solver is designed for extensibility to high-dimensional problems.
+
+2.  **Highly Modular & Extensible**
+    *   **Type System (`types.py`)**: Utilizes `chex.dataclass` and `jaxtyping` to define the type system, decoupling core concepts like the problem definition (`MMSBProblem`), algorithm configurations (`IPFPConfig`, `ControlGradConfig`), and the solution (`MMSBSolution`).
+    *   **Component Registry (`registry.py`)**: Implements a factory pattern that allows for dynamic registration and loading of different solvers, networks, and integrators via string names, managed through configuration files (e.g., Hydra).
+
+3.  **High-Performance Computing**
+    *   The entire codebase is built on JAX, using its `jit`, `vmap`, and `pmap` transformations for parallel computing and GPU acceleration.
+    *   In the neural solver, techniques such as gradient checkpointing and mixed-precision training are applied to improve computational and memory efficiency while maintaining numerical accuracy.
 
 ## Installation
 
 ### Environment Setup
-
-We use `pip` for managing dependencies. To set up the environment, run:
-
+We recommend using `pip` to manage dependencies. To set up the environment, please run:
 ```bash
-# Install dependencies (CPU version is sufficient for all experiments)
-pip install -r requirements-cpu.txt
+# Install dependencies
+pip install -r requirements-cpu.txt requirements-gpu.txt
 ```
 
 ### Core Dependencies
+*   **JAX Ecosystem**: `jax`, `jaxlib`, `flax`, `optax`, `chex`
+*   **Optimal Transport**: `ott-jax`
+*   **Scientific Computing**: `numpy`, `scipy`
+*   **Configuration**: `hydra-core`
 
-The framework includes support for both 1D theoretical validation and extensible high-dimensional neural solvers:
-
-**Core JAX Ecosystem:**
-- **JAX 0.6.2**: High-performance computing framework
-- **JAXLib 0.6.2**: JAX backend implementation
-- **NumPy 1.26.3**: Numerical computing foundation
-
-**Neural Architecture Components:**
-- **Flax 0.8.5**: Neural network architecture for Föllmer drift parametrization  
-- **Optax 0.1.9**: Gradient-based optimization framework
-- **Chex 0.1.85**: Reliable JAX testing and debugging utilities
-- **Einops 0.7.0**: Tensor operations with readable notation
-
-**Scientific Computing:**
-- **SciPy 1.12.0**: Scientific computing algorithms
-- **OTT-JAX 0.4.5**: Optimal transport computations
-- **BlackJAX 1.2.5**: MCMC sampling (for baseline comparisons)
-
-### Core Tests
-To confirm that the environment is set up correctly, run the core test suite:
-
+### Running Core Tests
+To verify that the environment is set up correctly, please run the test suite:
 ```bash
 pytest tests/
 ```
-All 17 tests should pass.
+All test cases should pass.
 
----
+## Reproducing Validation
 
-## Reproducing Experiments
-
-The main theoretical claims and figures in the paper can be reproduced using the shell scripts located in the `automation/` directory.
+The key theoretical validations and figures from the paper can be reproduced with scripts located in the `automation/` directory.
 
 ### Complete Validation Suite
-
-To run all validation workflows sequentially, execute the master script. This will reproduce all key figures and numerical results.
-
+To run all validation workflows in sequence, execute the main script. This will reproduce the figures and numerical results.
 ```bash
 chmod +x automation/run_complete_validation_suite.sh
 ./automation/run_complete_validation_suite.sh
 ```
 
-### Individual Workflows
-
-Alternatively, you can run each validation workflow independently:
-
-- **RTS Equivalence Validation**:
-  ```bash
-  ./automation/run_rts_equivalence_workflow.sh
-  ```
-- **Geometric Limits Validation**:
-  ```bash
-  ./automation/run_geometric_limits_workflow.sh
-  ```
-- **Parameter Sensitivity Analysis**:
-  ```bash
-  ./automation/run_parameter_sensitivity_workflow.sh
-  ```
-
-The resulting figures and data will be saved in the `results/` directory, organized by experiment type.
-
----
+### Individual Validation Workflows
+You can also run each validation workflow independently:
+*   **RTS Equivalence Validation**: Verifies the consistency of the MMSB solution with the Rauch-Tung-Striebel (RTS) smoother under specific conditions.
+    ```bash
+    ./automation/run_rts_equivalence_workflow.sh
+    ```
+*   **Geometric Limits Validation**: Explores how the Schrödinger bridge converges to a deterministic optimal transport path as the noise term approaches zero.
+    ```bash
+    ./automation/run_geometric_limits_workflow.sh
+    ```
+*   **Parameter Sensitivity Analysis**: Analyzes the sensitivity of the model's performance to key parameters, such as regularization strength and time step size.
+    ```bash
+    ./automation/run_parameter_sensitivity_workflow.sh
+    ```
+The generated results will be saved in the `results/` directory, organized by experiment type.
 
 ## Code Structure
 
@@ -101,38 +102,21 @@ The project is structured to separate the core algorithms from the experimental 
 
 ```
 src/mmsbvi/
-├── core/                    # Core type definitions and configurations
-│   ├── types.py            # Main data structures (Grid1D, MMSBProblem, etc.)
-│   └── registry.py         # Component registry for pluggable architecture
-├── algorithms/              # Core algorithm implementations
-│   ├── ipfp_1d.py          # 1D Multi-Marginal IPFP main algorithm
-│   ├── control_grad.py     # Primal-Control Gradient Flow solver 
-│   └── score_sb.py         # Score-based Schrödinger Bridge (placeholder)
-├── solvers/                 # Numerical solvers
-│   ├── pde_solver_1d.py    # Onsager-Fokker PDE solver
-│   └── gaussian_kernel_1d.py # OU transition kernel computation
-├── integrators/             # SDE numerical integration methods 
-│   └── integrators.py      # Euler, Heun, Milstein, AMED-Euler schemes
-├── nets/                    # Neural network architectures 
-│   └── flax_drift.py       # Flax-based Föllmer drift networks
-├── utils/                   # Utility functions
-│   ├── logger.py           # Logging system
-│   └── config.py           # YAML configuration management 
-├── configs/                 # Configuration files 
-│   ├── baseline.yaml       # Default configuration
-│   ├── lorenz_cfg.yaml     # Lorenz system configuration
-│   └── physionet_cfg.yaml  # PhysioNet dataset configuration
-├── cli/                     # Command line interface 
-│   └── train.py            # Unified training entry point
-└── visualization/           # Visualization modules
+├── core/                    # Core type definitions, configs, and component registry
+├── algorithms/              # Core algorithm implementations (IPFP, Neural Control)
+├── solvers/                 # Numerical solvers (PDE, Gaussian Kernel)
+├── integrators/             # SDE numerical integration schemes
+├── nets/                    # Neural network architectures (Flax)
+├── utils/                   # Utility functions (logging, config)
+└── configs/                 # Hydra configuration files
 
-theoretical_verification/    # 1D theoretical validation experiments
-tests/                       # Unit and integration tests for validation
-automation/                  # Shell scripts for running validation workflows
+theoretical_verification/    # Scripts for 1D theoretical validation experiments
+tests/                       # Unit and integration tests
+automation/                  # Shell scripts for validation workflows
 ```
 
 ---
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+<div align="center">
+This repository is licensed under the MIT License.
+</div>
