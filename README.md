@@ -1,7 +1,11 @@
 <div align="center">
-<h1>MMSBVI: Multi-Marginal Schrödinger Bridge Variational Inference</h1>
-<h3>Multi-Marginal Schrödinger Bridge Variational Inference</h3>
+<h1>Multi-Marginal Schrödinger Bridge Variational Inference</h1>
+<h3>MMSBVI</h3>
 </div>
+
+<p align="center">
+  <a href="README_CN.md">中文</a> 
+
 
 <p align="center">
   <a href="#core-concepts">Core Concepts</a> •
