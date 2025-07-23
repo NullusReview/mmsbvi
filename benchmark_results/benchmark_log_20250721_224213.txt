@@ -1,0 +1,92 @@
+🚀 启动Ultra-Performance SDE积分器基准测试
+目标: 选择最极致和最合适的积分器用于Neural Control Variational方法
+================================================================================
+🔥 启动极致积分器全面基准测试
+============================================================
+🚀 基础性能基准测试...
+  测试配置: batch=128, dim=2, steps=50
+    Euler: 0.0668s, Heun: 0.0663s, Euler加速比: 0.99x
+  测试配置: batch=256, dim=4, steps=100
+    Euler: 0.0850s, Heun: 0.0840s, Euler加速比: 0.99x
+  测试配置: batch=512, dim=2, steps=200
+    Euler: 0.0670s, Heun: 0.0689s, Euler加速比: 1.03x
+  测试配置: batch=128, dim=8, steps=50
+    Euler: 0.1770s, Heun: 0.1785s, Euler加速比: 1.01x
+🎯 数值精度基准测试...
+  测试步长 dt=0.1, 步数=10
+    Euler均值误差: 0.010857, 方差误差: 0.006201
+    Heun均值误差: 0.002840, 方差误差: 0.003652
+  测试步长 dt=0.05, 步数=20
+    Euler均值误差: 0.003639, 方差误差: 0.001339
+    Heun均值误差: 0.000238, 方差误差: 0.000186
+  测试步长 dt=0.01, 步数=100
+    Euler均值误差: 0.003393, 方差误差: 0.004138
+    Heun均值误差: 0.002626, 方差误差: 0.003896
+  测试步长 dt=0.005, 步数=200
+    Euler均值误差: 0.003167, 方差误差: 0.001501
+    Heun均值误差: 0.002785, 方差误差: 0.001386
+🧠 Neural Control Variational上下文测试...
+  测试配置: dim=2, batch=128, steps=50
+    测试UltraEulerMaruyamaIntegrator...
+    测试UltraHeunIntegrator...
+    Euler时间: 6.51s, Heun时间: 5.05s
+    Euler加速比: 0.78x
+    Euler最佳损失: 0.168963, Heun最佳损失: 0.169019
+    损失比率(Heun/Euler): 1.000
+  测试配置: dim=4, batch=256, steps=100
+    测试UltraEulerMaruyamaIntegrator...
+    测试UltraHeunIntegrator...
+    Euler时间: 11.16s, Heun时间: 11.12s
+    Euler加速比: 1.00x
+    Euler最佳损失: 0.157536, Heun最佳损失: 0.157529
+    损失比率(Heun/Euler): 1.000
+
+============================================================
+📊 结果分析和推荐
+============================================================
+1️⃣ 性能分析:
+   🏆 性能获胜者: Euler-Maruyama (平均1.00x 更快)
+2️⃣ 数值精度分析:
+   🏆 精度获胜者: Heun (误差更小)
+3️⃣ Neural Control Variational应用分析:
+   🏆 应用获胜者: Euler-Maruyama (损失更好)
+
+🎯 最终评分:
+   Euler-Maruyama总分: 4
+   Heun总分: 1
+🏆 推荐使用UltraEulerMaruyamaIntegrator作为默认积分器。
+   理由: 在性能、精度和实际应用中表现更优秀，更适合Neural Control Variational方法。
+Traceback (most recent call last):
+  File "/Users/willet/Downloads/SB VI/benchmark_integrators.py", line 481, in <module>
+    main()
+    ~~~~^^
+  File "/Users/willet/Downloads/SB VI/benchmark_integrators.py", line 472, in main
+    json.dump({
+    ~~~~~~~~~^^
+        "benchmark_results": results_serializable,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        "recommendation": recommendation_serializable
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    }, f, indent=2)
+    ^^^^^^^^^^^^^^^
+  File "/Users/willet/miniconda3/lib/python3.13/json/__init__.py", line 179, in dump
+    for chunk in iterable:
+                 ^^^^^^^^
+  File "/Users/willet/miniconda3/lib/python3.13/json/encoder.py", line 433, in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+  File "/Users/willet/miniconda3/lib/python3.13/json/encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "/Users/willet/miniconda3/lib/python3.13/json/encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "/Users/willet/miniconda3/lib/python3.13/json/encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "/Users/willet/miniconda3/lib/python3.13/json/encoder.py", line 326, in _iterencode_list
+    yield from chunks
+  File "/Users/willet/miniconda3/lib/python3.13/json/encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "/Users/willet/miniconda3/lib/python3.13/json/encoder.py", line 440, in _iterencode
+    o = _default(o)
+  File "/Users/willet/miniconda3/lib/python3.13/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+                    f'is not JSON serializable')
+TypeError: Object of type ArrayImpl is not JSON serializable

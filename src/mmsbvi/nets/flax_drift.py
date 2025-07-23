@@ -106,6 +106,12 @@ class TimeEncoder(nn.Module):
         Returns:
             encodings: Time encodings / 时间编码
         """
+        # 🔧 FIX: Robustly handle Python floats by converting to JAX array.
+        # This prevents the "'float' object has no attribute 'ndim'" error.
+        # 修复：通过转换为JAX数组来稳健地处理Python浮点数。
+        # 这可以防止“'float'对象没有'ndim'属性”的错误。
+        t = jnp.asarray(t)
+        
         # 如果是标量，直接编码 / If scalar, encode directly
         if t.ndim == 0:
             return self.encode_time(t)
@@ -458,10 +464,10 @@ class FöllmerDriftNet(nn.Module):
                 dropout_rate=self.config.dropout_rate
             )
         
-        # 最终输出层 / Final output layer
+        # 最终输出层（小方差初始化提高梯度稳定性） / Final output layer (small variance init for gradient stability)
         self.output_layer = nn.Dense(
             self.state_dim,
-            kernel_init=nn.initializers.orthogonal(),  # 正交初始化
+            kernel_init=nn.initializers.normal(stddev=0.01),  # 小方差初始化防梯度爆炸 / Small variance init to prevent gradient explosion
             bias_init=nn.initializers.zeros
         )
         
@@ -530,9 +536,12 @@ class FöllmerDriftNet(nn.Module):
             # h = jnp.squeeze(h_attn, axis=1)  # [batch, hidden]
             pass  # Bypassing the attention block.
         
-        # 最终输出 / Final output
+        # 最终输出（添加裁剪防梯度爆炸） / Final output (with clipping to prevent gradient explosion)
         drift = self.output_layer(h)
         drift = drift * self.output_scale
+        
+        # 输出裁剪提高数值稳定性 / Output clipping for numerical stability
+        drift = jnp.clip(drift, -5.0, 5.0)  # 限制drift输出范围防止梯度爆炸 / Limit drift output range to prevent gradient explosion
         
         # 移除批次维度（如果需要）/ Remove batch dimension if needed
         if not batch_processing:
@@ -823,19 +832,31 @@ def create_training_state(
     rngs = {'params': params_key, 'dropout': dropout_key}
     params = network.init(rngs, dummy_x, dummy_t, train=True)['params']
     
-    # 创建优化器 / Create optimizer
+    # 创建优化器（添加学习率预热防梯度震荡） / Create optimizer (with LR warmup to prevent gradient oscillation)
+    warmup_schedule = optax.linear_schedule(
+        init_value=0.0,
+        end_value=config.learning_rate,
+        transition_steps=config.warmup_steps
+    )
+    
     if config.decay_schedule == "cosine":
-        schedule = optax.cosine_decay_schedule(
+        decay_schedule = optax.cosine_decay_schedule(
             init_value=config.learning_rate,
             decay_steps=config.num_epochs * 1000,  # 假设每轮1000步
             alpha=0.1
         )
     else:
-        schedule = optax.exponential_decay(
+        decay_schedule = optax.exponential_decay(
             init_value=config.learning_rate,
             transition_steps=1000,
             decay_rate=0.9
         )
+    
+    # 组合预热和衰减调度 / Combine warmup and decay schedules
+    schedule = optax.join_schedules(
+        schedules=[warmup_schedule, decay_schedule],
+        boundaries=[config.warmup_steps]
+    )
     
     optimizer = optax.chain(
         optax.clip_by_global_norm(config.gradient_clip_norm),
@@ -851,6 +872,7 @@ def create_training_state(
     return NetworkTrainingState(
         params=params,
         optimizer_state=opt_state,
+        optimizer=optimizer,  # 存储优化器实例 / Store optimizer instance
         step=0,
         best_loss=float('inf'),
         metrics={}

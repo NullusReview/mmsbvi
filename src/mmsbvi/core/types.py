@@ -232,7 +232,7 @@ class TrainingConfig:
     batch_size: int = 256  # 批量大小 / Batch size
     learning_rate: float = 3e-4  # 学习率 / Learning rate
     num_epochs: int = 1000  # 训练轮数 / Number of epochs
-    gradient_clip_norm: float = 1.0  # 梯度裁剪 / Gradient clipping
+    gradient_clip_norm: float = 0.2  # 梯度裁剪（Neural Control Variational优化） / Gradient clipping (optimized for Neural Control Variational)
     use_mixed_precision: bool = True  # 混合精度训练 / Mixed precision training
     accumulate_gradients: int = 1  # 梯度累积步数 / Gradient accumulation steps
     warmup_steps: int = 1000  # 预热步数 / Warmup steps
@@ -268,10 +268,29 @@ class NetworkTrainingState:
     step: int  # 训练步数 / Training step
     best_loss: float  # 最佳损失 / Best loss
     metrics: Dict[str, float]  # 训练指标 / Training metrics
+    optimizer: Any = None  # 优化器实例 / Optimizer instance
     
     def update(self, **kwargs) -> "NetworkTrainingState":
         """Update training state / 更新训练状态"""
         return self.replace(**kwargs)
+    
+    def apply_gradients(self, *, grads, **kwargs) -> "NetworkTrainingState":
+        """Apply gradients to parameters / 将梯度应用到参数"""
+        import optax
+        if self.optimizer is None:
+            raise ValueError("Optimizer not set in training state")
+        
+        updates, new_opt_state = self.optimizer.update(
+            grads, self.optimizer_state, self.params
+        )
+        new_params = optax.apply_updates(self.params, updates)
+        
+        return self.update(
+            params=new_params,
+            optimizer_state=new_opt_state,
+            step=self.step + 1,
+            **kwargs
+        )
 
 
 # ============================================================================ 
@@ -436,3 +455,117 @@ class DriftNetwork(Protocol):
             drift_batch: Batch of drifts / 漂移批量
         """
         ...
+
+
+# ============================================================================
+# Neural Control Variational Types / 神经控制变分类型
+# ============================================================================
+
+# Path and control types / 路径和控制类型
+PathSamples = Float[Array, "batch_size num_steps state_dim"]  # 路径样本 / Path samples
+ControlObjective = Callable[[PathSamples, jnp.ndarray], Tuple[float, Dict[str, float]]]  # 控制目标函数 / Control objective function
+DensityLogPdf = Callable[[BatchStates], Float[Array, "batch_size"]]  # 密度对数概率函数 / Density log-pdf function
+BoundaryPenalty = float  # 边界惩罚值 / Boundary penalty value
+ControlCost = float  # 控制代价值 / Control cost value
+
+# Sampling and integration types / 采样和积分类型
+InitialSampler = Callable[[int, jax.random.PRNGKey], BatchStates]  # 初始状态采样器 / Initial state sampler
+PathIntegrator = Callable[[BatchStates, NetworkParams, jax.random.PRNGKey], PathSamples]  # 路径积分器 / Path integrator
+VarianceReducer = Callable[[jnp.ndarray], jnp.ndarray]  # 方差减少器 / Variance reducer
+
+
+@chex.dataclass
+class ControlGradConfig:
+    """
+    Configuration for Neural Control Variational method
+    神经控制变分方法配置
+    """
+    # Problem specification / 问题规范
+    state_dim: int = 2  # 状态维度 / State dimension
+    time_horizon: float = 1.0  # 时间域长度 / Time horizon length
+    num_time_steps: int = 100  # 时间步数 / Number of time steps
+    diffusion_coeff: float = 0.1  # 扩散系数 / Diffusion coefficient
+    
+    # Training parameters / 训练参数
+    batch_size: int = 1024  # 批量大小 / Batch size
+    num_epochs: int = 5000  # 训练轮数 / Number of epochs
+    learning_rate: float = 5e-5  # 学习率（Neural Control Variational稳定优化） / Learning rate (stable optimization for Neural Control Variational)
+    gradient_clip_norm: float = 0.2  # 梯度裁剪范数（强化稳定性） / Gradient clipping norm (enhanced stability)
+    
+    # Sampling parameters / 采样参数
+    num_samples: int = 10000  # 采样数量 / Number of samples
+    importance_sampling: bool = True  # 重要性采样 / Importance sampling
+    variance_reduction: bool = True  # 方差减少 / Variance reduction
+    
+    # Boundary conditions / 边界条件
+    initial_distribution: str = "gaussian"  # 初始分布类型 / Initial distribution type
+    target_distribution: str = "gaussian"  # 目标分布类型 / Target distribution type
+    initial_params: Optional[Dict[str, float]] = None  # 初始分布参数 / Initial distribution parameters
+    target_params: Optional[Dict[str, float]] = None  # 目标分布参数 / Target distribution parameters
+    
+    # Optimization settings / 优化设置
+    optimizer: str = "adamw"  # 优化器类型 / Optimizer type
+    schedule: str = "cosine"  # 学习率调度 / Learning rate schedule
+    warmup_steps: int = 1000  # 预热步数 / Warmup steps
+    
+    # Performance optimizations / 性能优化
+    use_mixed_precision: bool = True  # 混合精度训练 / Mixed precision training
+    use_gradient_checkpointing: bool = True  # 梯度检查点 / Gradient checkpointing
+    parallel_devices: int = 1  # 并行设备数 / Number of parallel devices
+    
+    # Loss function weighting (based on Neural Control Variational theory)
+    # 损失函数权重（基于神经控制变分理论）
+    control_weight: float = 1.0  # 控制代价权重 / Control cost weight
+    boundary_weight: float = 1.0  # 边界惩罚权重 / Boundary penalty weight (changed from hardcoded 10.0)
+    adaptive_weighting: bool = False  # 自适应权重调整 / Adaptive weight adjustment
+    
+    # Numerical stability / 数值稳定性
+    log_stability_eps: float = 1e-8  # 对数稳定性小量 / Log stability epsilon
+    density_estimation_method: str = "kde"  # 密度估计方法 / Density estimation method
+    bandwidth_selection: str = "scott"  # 带宽选择方法 / Bandwidth selection method
+    
+    # Validation and monitoring / 验证和监控
+    validation_freq: int = 100  # 验证频率 / Validation frequency
+    checkpoint_freq: int = 1000  # 检查点频率 / Checkpoint frequency
+    log_freq: int = 10  # 日志频率 / Logging frequency
+    
+    def __post_init__(self):
+        """Initialize default parameters / 初始化默认参数"""
+        if self.initial_params is None:
+            self.initial_params = {"mean": 0.0, "std": 1.0}
+        if self.target_params is None:
+            self.target_params = {"mean": 0.0, "std": 1.0}
+
+
+@chex.dataclass
+class ControlGradState:
+    """
+    Training state for Neural Control Variational method with JAX-optimized history tracking
+    神经控制变分方法训练状态，使用JAX优化的历史记录跟踪
+    
+    IMPORTANT: All history arrays are pre-allocated JAX arrays to avoid JIT performance issues
+    重要提示：所有历史数组都是预分配的JAX数组，以避免JIT性能问题
+    """
+    training_state: NetworkTrainingState  # 网络训练状态 / Network training state
+    config: ControlGradConfig  # 配置信息 / Configuration
+    step: int  # 训练步数 / Training step
+    epoch: int  # 训练轮数 / Training epoch
+    best_loss: float  # 最佳损失 / Best loss
+    
+    # JAX-optimized history arrays (pre-allocated for performance)
+    # JAX优化的历史数组（预分配以提高性能）
+    loss_history: Float[Array, "max_epochs"]  # 损失历史 / Loss history
+    gradient_norm_history: Float[Array, "max_epochs"]  # 梯度范数历史 / Gradient norm history
+    time_per_epoch: Float[Array, "max_epochs"]  # 每轮时间 / Time per epoch
+    control_cost_history: Float[Array, "max_epochs"]  # 控制代价历史 / Control cost history
+    boundary_penalty_history: Float[Array, "max_epochs"]  # 边界惩罚历史 / Boundary penalty history
+    
+    # Tracking for current position in history arrays
+    # 历史数组中当前位置的跟踪
+    history_index: int = 0  # 当前历史索引 / Current history index
+    
+    path_samples: Optional[PathSamples] = None  # 路径样本 / Path samples
+    
+    def update(self, **kwargs) -> "ControlGradState":
+        """Update state with new values / 用新值更新状态"""
+        return self.replace(**kwargs)

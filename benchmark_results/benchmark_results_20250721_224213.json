@@ -1,0 +1,186 @@
+{
+  "benchmark_results": {
+    "performance": {
+      "euler": [
+        {
+          "config": {
+            "batch_size": 128,
+            "state_dim": 2,
+            "n_steps": 50
+          },
+          "avg_time": 0.06684708595275879,
+          "std_time": 0.006420067997114063,
+          "path_shape": [
+            128,
+            51,
+            2
+          ]
+        },
+        {
+          "config": {
+            "batch_size": 256,
+            "state_dim": 4,
+            "n_steps": 100
+          },
+          "avg_time": 0.08499438762664795,
+          "std_time": 0.0043359586898467474,
+          "path_shape": [
+            256,
+            101,
+            4
+          ]
+        },
+        {
+          "config": {
+            "batch_size": 512,
+            "state_dim": 2,
+            "n_steps": 200
+          },
+          "avg_time": 0.06703445911407471,
+          "std_time": 0.002482276611734226,
+          "path_shape": [
+            512,
+            201,
+            2
+          ]
+        },
+        {
+          "config": {
+            "batch_size": 128,
+            "state_dim": 8,
+            "n_steps": 50
+          },
+          "avg_time": 0.17701287269592286,
+          "std_time": 0.002891202915340051,
+          "path_shape": [
+            128,
+            51,
+            8
+          ]
+        }
+      ],
+      "heun": [
+        {
+          "config": {
+            "batch_size": 128,
+            "state_dim": 2,
+            "n_steps": 50
+          },
+          "avg_time": 0.0662832498550415,
+          "std_time": 0.0016705740680377271,
+          "path_shape": [
+            128,
+            51,
+            2
+          ]
+        },
+        {
+          "config": {
+            "batch_size": 256,
+            "state_dim": 4,
+            "n_steps": 100
+          },
+          "avg_time": 0.08404769897460937,
+          "std_time": 0.002386168366575844,
+          "path_shape": [
+            256,
+            101,
+            4
+          ]
+        },
+        {
+          "config": {
+            "batch_size": 512,
+            "state_dim": 2,
+            "n_steps": 200
+          },
+          "avg_time": 0.06886885166168213,
+          "std_time": 0.0018329840774692025,
+          "path_shape": [
+            512,
+            201,
+            2
+          ]
+        },
+        {
+          "config": {
+            "batch_size": 128,
+            "state_dim": 8,
+            "n_steps": 50
+          },
+          "avg_time": 0.17850713729858397,
+          "std_time": 0.0019140331787709886,
+          "path_shape": [
+            128,
+            51,
+            8
+          ]
+        }
+      ]
+    },
+    "accuracy": {
+      "euler": {
+        "0.1": {
+          "mean_error": 0.010857241989477462,
+          "var_error": 0.006200835941029999,
+          "final_mean": 0.595673417723156,
+          "final_var": 0.06309168623560019
+        },
+        "0.05": {
+          "mean_error": 0.003639240482920414,
+          "var_error": 0.0013393191826163789,
+          "final_mean": 0.602891419229713,
+          "final_var": 0.058230169477186566
+        },
+        "0.01": {
+          "mean_error": 0.003392769796165873,
+          "var_error": 0.004137525443405801,
+          "final_mean": 0.6031378899164676,
+          "final_var": 0.06102837573797599
+        },
+        "0.005": {
+          "mean_error": 0.0031668446357063784,
+          "var_error": 0.001500525094010316,
+          "final_mean": 0.603363815076927,
+          "final_var": 0.0583913753885805
+        }
+      },
+      "heun": {
+        "0.1": {
+          "mean_error": 0.002840375042173715,
+          "var_error": 0.003651855480727939,
+          "final_mean": 0.6036902846704597,
+          "final_var": 0.060542705775298127
+        },
+        "0.05": {
+          "mean_error": 0.0002378081994033332,
+          "var_error": 0.00018643418110964038,
+          "final_mean": 0.6067684679120368,
+          "final_var": 0.05707728447567983
+        },
+        "0.01": {
+          "mean_error": 0.00262596880378152,
+          "var_error": 0.0038956597166929646,
+          "final_mean": 0.6039046909088519,
+          "final_var": 0.06078651001126315
+        },
+        "0.005": {
+          "mean_error": 0.002784733428491948,
+          "var_error": 0.0013855112292196561,
+          "final_mean": 0.6037459262841415,
+          "final_var": 0.058276361523789844
+        }
+      }
+    },
+    "neural_control": {
+      "euler": [
+        {
+          "config": {
+            "state_dim": 2,
+            "batch_size": 128,
+            "num_time_steps": 50
+          },
+          "training_time": 6.512003660202026,
+          "success": true,
+          "final_loss": 0.1883880130568748,
+          "best_loss": 

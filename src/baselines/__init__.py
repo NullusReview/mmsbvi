@@ -17,7 +17,6 @@ Implements various baseline methods for comparison with MMSB-VI algorithm, inclu
 
 from .ekf import PendulumEKFSmoother, EKFState, EKFResult
 from .ukf import PendulumUKFSmoother, UKFState, UKFResult
-from .svi import PendulumSVISmoother, SVIState, SVIParams
 
 __all__ = [
     "PendulumEKFSmoother",
@@ -26,7 +25,4 @@ __all__ = [
     "PendulumUKFSmoother",
     "UKFState",
     "UKFResult",
-    "PendulumSVISmoother",
-    "SVIState",
-    "SVIParams"
 ]

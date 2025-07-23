@@ -35,7 +35,7 @@ def detect_hardware():
     if has_nvidia_gpu:
         return "gpu"
     elif system == "Darwin" and "arm" in machine.lower():
-        return "m2_mac"
+        return "mac"
     else:
         return "cpu"
 
@@ -46,8 +46,8 @@ def install_requirements(env_type):
         print("Installing GPU environment (CUDA)...")
     else:
         requirements_file = "requirements-cpu.txt"
-        if env_type == "m2_mac":
-            print("Installing M2 Mac CPU environment...")
+        if env_type == "mac":
+            print("Installing Mac CPU environment...")
         else:
             print("Installing CPU environment...")
     
@@ -134,8 +134,8 @@ def main():
             print("\nEnvironment setup completed successfully!")
             if env_type == "gpu":
                 print("Remember to configure CUDA environment variables if needed.")
-            elif env_type == "m2_mac":
-                print("M2 Mac optimized for CPU-only computation.")
+            elif env_type == "mac":
+                print("Mac optimized for CPU-only computation.")
         else:
             print("\nInstallation completed but verification failed.")
     else:
