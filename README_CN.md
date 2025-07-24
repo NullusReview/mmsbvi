@@ -25,7 +25,7 @@
 
 $$
 Q^{*}
-  = \underset{Q}{\text{arg min}}\,
+  = \underset{Q}{\text{arg min}}
     \mathrm{KL}\bigl(Q | P_{\mathrm{ref}}\bigr)
   \quad\text{s.t.}\quad
   Q_{t_k} = \rho_{t_k}^{\text{obs}}, k = 0,\dots,K.
