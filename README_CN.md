@@ -23,9 +23,9 @@
 
 形式化描述如下：
 $$
-Q^* = \underset{\substack{Q: Q_{t_0}=\rho_0 \\ Q_{t_k}=\rho_{t_k}^{\text{obs}}, k=1,\dots,K}}{\arg\min} \mathrm{KL}(Q \,\|\, P_{\text{ref}})
+Q^* = \operatorname*{arg\,min}_{\substack{Q: Q_{t_0}=\rho_0 \\ Q_{t_k}=\rho_{t_k}^{\text{obs}}, k=1,\dots,K}} \mathrm{KL}(Q \,\|\, P_{\text{ref}})
 $$
-此问题的解，即后验路径测度 $Q^*$，其演化轨迹是在由 **Onsager-Fokker度量** 所赋予几何结构的概率分布空间中的一条测地线。该理论框架统一了经典与现代观点，不仅能在线性高斯设定下精确恢复经典的 Rauch-Tung-Striebel (RTS) 平滑器，还能在参数极限下自然地内插 Wasserstein 几何与 Fisher-Rao 几何。
+此问题的解，即后验路径测度 $Q^*$，其演化轨迹是在由 **Onsager-Fokker 度量** 所赋予几何结构的概率分布空间中的一条测地线。该理论框架统一了经典与现代观点，不仅能在线性高斯设定下精确恢复经典的 Rauch-Tung-Striebel (RTS) 平滑器，还能在参数极限下自然地内插 Wasserstein 几何与 Fisher-Rao 几何。
 
 本仓库提供了一个高精度的**迭代比例拟合算法 (IPFP)** 实现，作为严格数值验证上述理论发现的核心工具。同时，我们也勾勒了一个基于神经网络的随机控制方法，作为扩展至高维问题的方向。
 
