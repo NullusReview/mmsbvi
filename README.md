@@ -26,9 +26,16 @@ The central thesis of this work is that **the prior is the geometry**. We demons
 This is formalized by **Theorem 1 (VI-MMSB Equivalence)**, which proves that minimizing the variational free energy is equivalent to solving a multi-marginal Schrödinger Bridge problem. The objective is to find a path measure $Q$ that minimizes the Kullback-Leibler (KL) divergence to a reference process $P_{\text{ref}}$ (e.g., an Ornstein-Uhlenbeck process), subject to matching a set of target marginals $\{\rho_{t_k}^{\text{obs}}\}$ derived from observations.
 
 Formally, this constrained optimization is expressed as:
+
 $$
-Q^* = \operatorname*{arg\,min}_{Q} \left\{ \mathrm{KL}(Q \,\|\, P_{\text{ref}}) \;\middle|\; Q_{t_k}=\rho_{t_k}^{\text{obs}} \text{ for } k=0, \dots, K \right\}
+Q^{*} = 
+\operatorname*{arg\,min}_{Q} \left\{
+  \mathrm{KL}\!\left( Q \,\|\, P_{\text{ref}} \right)
+  \;\middle|\;
+  Q_{t_k} = \rho_{t_k}^{\text{obs}},\; k = 0,\dots,K
+\right\}
 $$
+
 The solution to this problem, the posterior path measure $Q^*$, traces a geodesic on the space of probability distributions endowed with the **Onsager-Fokker metric**. This framework unifies classical and modern perspectives, recovering the Rauch-Tung-Striebel (RTS) smoother in the linear-Gaussian case and interpolating between Wasserstein and Fisher-Rao geometries.
 
 This repository provides a high-precision implementation of the **Iterative Proportional Fitting Procedure (IPFP)** to solve this problem, serving as a tool for the rigorous numerical validation of these theoretical findings. A neural-network-based control approach is outlined as a direction to tackle higher-dimensional problems.

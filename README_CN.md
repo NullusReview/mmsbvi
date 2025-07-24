@@ -22,9 +22,16 @@
 这一思想由我们的核心成果 **定理1 (VI-MMSB 等价性)** 精确阐述。该定理证明了，最小化变分自由能的目标，与求解一个多边际薛定谔桥问题是完全等价的。该问题的目标是寻找一个路径测度 $Q$，使其与一个参考过程 $P_{\text{ref}}$ (例如 Ornstein-Uhlenbeck 过程) 的 KL 散度 (Kullback-Leibler divergence) 最小，同时满足其在一系列观测时间点的边际分布恰好是给定的目标边际 $\{\rho_{t_k}^{\text{obs}}\}$。
 
 形式化描述如下：
+
 $$
-Q^* = \operatorname*{arg\,min}_{Q} \left\{ \mathrm{KL}(Q \,\|\, P_{\text{ref}}) \;\middle|\; Q_{t_k}=\rho_{t_k}^{\text{obs}} \text{ for } k=0, \dots, K \right\}
+Q^{*} = 
+\operatorname*{arg\,min}_{Q} \left\{
+  \mathrm{KL}\!\left( Q \,\|\, P_{\text{ref}} \right)
+  \;\middle|\;
+  Q_{t_k} = \rho_{t_k}^{\text{obs}},\; k = 0,\dots,K
+\right\}
 $$
+
 此问题的解，即后验路径测度 $Q^*$，其演化轨迹是在由 **Onsager-Fokker 度量** 所赋予几何结构的概率分布空间中的一条测地线。该理论框架统一了经典与现代观点，不仅能在线性高斯设定下精确恢复经典的 Rauch-Tung-Striebel (RTS) 平滑器，还能在参数极限下自然地内插 Wasserstein 几何与 Fisher-Rao 几何。
 
 本仓库提供了一个高精度的**迭代比例拟合算法 (IPFP)** 实现，作为严格数值验证上述理论发现的核心工具。同时，我们也勾勒了一个基于神经网络的随机控制方法，作为扩展至高维问题的方向。
