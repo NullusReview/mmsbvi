@@ -28,12 +28,13 @@ This is formalized by **Theorem 1 (VI-MMSB Equivalence)**, which proves that min
 Formally, this constrained optimization is expressed as:
 
 $$
-Q^{*} = 
-\operatorname*{arg\,min}_{Q} \left\{
-  \mathrm{KL}\!\left( Q \,\|\, P_{\text{ref}} \right)
-  \;\middle|\;
-  Q_{t_k} = \rho_{t_k}^{\text{obs}},\; k = 0,\dots,K
-\right\}
+Q^{*}
+  = \operatorname{arg\,min}_{Q}
+    \left\{
+      \mathrm{KL}\!\bigl(Q\,\Vert\,P_{\text{ref}}\bigr)
+      \;\middle|\;
+      Q_{t_k} = \rho_{t_k}^{\text{obs}},\; k = 0,\dots,K
+    \right\}
 $$
 
 The solution to this problem, the posterior path measure $Q^*$, traces a geodesic on the space of probability distributions endowed with the **Onsager-Fokker metric**. This framework unifies classical and modern perspectives, recovering the Rauch-Tung-Striebel (RTS) smoother in the linear-Gaussian case and interpolating between Wasserstein and Fisher-Rao geometries.

@@ -24,12 +24,13 @@
 形式化描述如下：
 
 $$
-Q^{*} = 
-\operatorname*{arg\,min}_{Q} \left\{
-  \mathrm{KL}\!\left( Q \,\|\, P_{\text{ref}} \right)
-  \;\middle|\;
-  Q_{t_k} = \rho_{t_k}^{\text{obs}},\; k = 0,\dots,K
-\right\}
+Q^{*}
+  = \operatorname{arg\,min}_{Q}
+    \left\{
+      \mathrm{KL}\!\bigl(Q\,\Vert\,P_{\text{ref}}\bigr)
+      \;\middle|\;
+      Q_{t_k} = \rho_{t_k}^{\text{obs}},\; k = 0,\dots,K
+    \right\}
 $$
 
 此问题的解，即后验路径测度 $Q^*$，其演化轨迹是在由 **Onsager-Fokker 度量** 所赋予几何结构的概率分布空间中的一条测地线。该理论框架统一了经典与现代观点，不仅能在线性高斯设定下精确恢复经典的 Rauch-Tung-Striebel (RTS) 平滑器，还能在参数极限下自然地内插 Wasserstein 几何与 Fisher-Rao 几何。
