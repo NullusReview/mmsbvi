@@ -25,9 +25,9 @@ The central thesis of this work is that **the prior is the geometry**. We demons
 
 This is formalized by **Theorem 1 (VI-MMSB Equivalence)**, which proves that minimizing the variational free energy is equivalent to solving a multi-marginal Schrödinger Bridge problem. The objective is to find a path measure $Q$ that minimizes the Kullback-Leibler (KL) divergence to a reference process $P_{\text{ref}}$ (e.g., an Ornstein-Uhlenbeck process), subject to matching a set of target marginals $\{\rho_{t_k}^{\text{obs}}\}$ derived from observations.
 
-Formally, the optimization problem is:
+Formally, this constrained optimization is expressed as:
 $$
-Q^* = \operatorname*{arg\,min}_{\substack{Q: Q_{t_0}=\rho_0 \\ Q_{t_k}=\rho_{t_k}^{\text{obs}}, k=1,\dots,K}} \mathrm{KL}(Q \,\|\, P_{\text{ref}})
+Q^* = \operatorname*{arg\,min}_{Q} \left\{ \mathrm{KL}(Q \,\|\, P_{\text{ref}}) \;\middle|\; Q_{t_k}=\rho_{t_k}^{\text{obs}} \text{ for } k=0, \dots, K \right\}
 $$
 The solution to this problem, the posterior path measure $Q^*$, traces a geodesic on the space of probability distributions endowed with the **Onsager-Fokker metric**. This framework unifies classical and modern perspectives, recovering the Rauch-Tung-Striebel (RTS) smoother in the linear-Gaussian case and interpolating between Wasserstein and Fisher-Rao geometries.
 
