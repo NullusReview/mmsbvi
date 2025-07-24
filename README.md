@@ -29,10 +29,10 @@ Formally, this constrained optimization is expressed as:
 
 $$
 Q^{*}
-  = \underset{Q}{\arg\min}\;
-    \mathrm{KL}\!\bigl(Q \,\Vert\, P_{\mathrm{ref}}\bigr)
+  = \underset{Q}{\operatorname{arg\,min}}
+    \mathrm{KL}\bigl(Q \,\Vert\, P_{\mathrm{ref}}\bigr)
   \quad\text{s.t.}\quad
-  Q_{t_k} = \rho_{t_k}^{\text{obs}},\quad k = 0,\dots,K.
+  Q_{t_k} = \rho_{t_k}^{\text{obs}},\; k = 0,\dots,K.
 $$
 
 The solution to this problem, the posterior path measure $Q^*$, traces a geodesic on the space of probability distributions endowed with the **Onsager-Fokker metric**. This framework unifies classical and modern perspectives, recovering the Rauch-Tung-Striebel (RTS) smoother in the linear-Gaussian case and interpolating between Wasserstein and Fisher-Rao geometries.
