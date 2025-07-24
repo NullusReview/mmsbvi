@@ -17,23 +17,21 @@
 
 ---
 
-This repository contains the JAX implementation for the ICLR 2026 paper, ***Geometric Variational Inference via Multi-Marginal Schrödinger Bridge***. This project provides a framework for exploring and validating the theoretical duality between Variational Inference in Path Space and Multi-Marginal Optimal Transport.
+This repository contains the JAX implementation for the paper, ***Geometric Variational Inference via Multi-Marginal Schrödinger Bridge***. This project establishes and numerically validates a fundamental equivalence between Variational Inference in path space and a Multi-Marginal Schrödinger Bridge (MMSB) problem, reframing Bayesian smoothing through the lens of optimal transport and information geometry.
 
 ## Core Concepts
 
-The **Multi-Marginal Schrödinger Bridge (MMSB)** problem seeks to find a stochastic process whose marginal distributions at several specified time points match a series of given target distributions. This is achieved while minimizing the Kullback-Leibler (KL) divergence of the process's path measure with respect to a prior reference process (typically Brownian motion or an Ornstein-Uhlenbeck process).
+The central thesis of this work is that **the prior is the geometry**. We demonstrate that Bayesian smoothing for continuous-time systems can be viewed as finding a geodesic on a Riemannian manifold whose metric is determined by the reference process.
 
-Formally, given a series of target marginals $\rho_0, \rho_1, \dots, \rho_K$ at time points $t_0, t_1, \dots, t_K$, we seek a path measure $\mathbb{P}$ that solves the following optimization problem:
+This is formalized by **Theorem 1 (VI-MMSB Equivalence)**, which proves that minimizing the variational free energy is equivalent to solving a multi-marginal Schrödinger Bridge problem. The objective is to find a path measure $Q$ that minimizes the Kullback-Leibler (KL) divergence to a reference process $P_{\text{ref}}$ (e.g., an Ornstein-Uhlenbeck process), subject to matching a set of target marginals $\{\rho_{t_k}^{\text{obs}}\}$ derived from observations.
 
+Formally, the optimization problem is:
 $$
-\mathbb{P}^* = \arg\min_{\mathbb{P}} \text{KL}(\mathbb{P} || \mathbb{Q}) \quad \text{s.t.} \quad X_{t_k} \sim \rho_k, \forall k \in \{0, \dots, K\}
+Q^* = \underset{\substack{Q: Q_{t_0}=\rho_0 \\ Q_{t_k}=\rho_{t_k}^{\text{obs}}, k=1,\dots,K}}{\arg\min} \mathrm{KL}(Q \,\|\, P_{\text{ref}})
 $$
+The solution to this problem, the posterior path measure $Q^*$, traces a geodesic on the space of probability distributions endowed with the **Onsager-Fokker metric**. This framework unifies classical and modern perspectives, recovering the Rauch-Tung-Striebel (RTS) smoother in the linear-Gaussian case and interpolating between Wasserstein and Fisher-Rao geometries.
 
-where $\mathbb{Q}$ is the path measure of a prior reference process (e.g., an OU process). This problem is equivalent to a stochastic control problem, and its solution is characterized by a system of coupled, nonlinear partial differential equations known as the Schrödinger system.
-
-This project explores two paradigms for solving this problem:
-1.  **Classical Numerical Methods**: Solving the dual problem on a discrete grid via the Iterative Proportional Fitting Procedure (IPFP).
-2.  **Modern Machine Learning Methods**: Reformulating the problem as one of stochastic control and parameterizing the control policy with a neural network for end-to-end optimization.
+This repository provides a high-precision implementation of the **Iterative Proportional Fitting Procedure (IPFP)** to solve this problem, serving as a tool for the rigorous numerical validation of these theoretical findings. A neural-network-based control approach is outlined as a direction to tackle higher-dimensional problems.
 
 ## Architectural Highlights
 

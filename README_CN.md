@@ -13,27 +13,25 @@
 
 ---
 
-本仓库是 ICLR 2026 论文 ***Geometric Variational Inference via Multi-Marginal Schrödinger Bridge*** 的 JAX 实现。项目旨在提供一个框架，用于探索和验证“路径空间变分推断” (Variational Inference in Path Space) 与“多边际最优传输” (Multi-Marginal Optimal Transport) 之间的理论对偶性。
+本仓库是论文 ***Geometric Variational Inference via Multi-Marginal Schrödinger Bridge*** 的官方 JAX 实现。本项目旨在建立并数值验证一个核心理论：路径空间中的变分推断 (Variational Inference) 与一个多边际薛定谔桥 (Multi-Marginal Schrödinger Bridge, MMSB) 问题存在基础等价性。这一发现将经典的贝叶斯平滑问题置于最优传输与信息几何的统一视角下进行审视。
 
-## 核心概念
+## 核心思想
 
-“多边际薛定谔桥” (Multi-Marginal Schrödinger Bridge, MMSB) 问题本质为寻找一个随机过程，其在多个指定时间点的边缘分布 (marginal distribution) 与给定的目标分布相匹配，同时使该过程的路径测度与一个先验参考过程（通常是布朗运动或Ornstein-Uhlenbeck过程）的KL散度最小。
+本工作的核心论点是：**先验即几何 (The Prior is the Geometry)**。我们证明了连续时间系统中的贝叶斯平滑问题，等价于在某个黎曼流形上寻找一条测地线，而该流形的度量完全由先验参考过程决定。
 
-形式上，给定在时间点 $t_0, t_1, \dots, t_K$ 的一系列目标边际分布 $\rho_0, \rho_1, \dots, \rho_K$，我们寻找一个路径测度 $\mathbb{P}$，以解决以下优化问题：
+这一思想由我们的核心成果 **定理1 (VI-MMSB 等价性)** 精确阐述。该定理证明了，最小化变分自由能的目标，与求解一个多边际薛定谔桥问题是完全等价的。该问题的目标是寻找一个路径测度 $Q$，使其与一个参考过程 $P_{\text{ref}}$ (例如 Ornstein-Uhlenbeck 过程) 的 KL 散度 (Kullback-Leibler divergence) 最小，同时满足其在一系列观测时间点的边际分布恰好是给定的目标边际 $\{\rho_{t_k}^{\text{obs}}\}$。
 
+形式化描述如下：
 $$
-\mathbb{P}^* = \arg\min_{\mathbb{P}} \text{KL}(\mathbb{P} || \mathbb{Q}) \quad \text{s.t.} \quad X_{t_k} \sim \rho_k, \forall k \in \{0, \dots, K\}
+Q^* = \underset{\substack{Q: Q_{t_0}=\rho_0 \\ Q_{t_k}=\rho_{t_k}^{\text{obs}}, k=1,\dots,K}}{\arg\min} \mathrm{KL}(Q \,\|\, P_{\text{ref}})
 $$
+此问题的解，即后验路径测度 $Q^*$，其演化轨迹是在由 **Onsager-Fokker度量** 所赋予几何结构的概率分布空间中的一条测地线。该理论框架统一了经典与现代观点，不仅能在线性高斯设定下精确恢复经典的 Rauch-Tung-Striebel (RTS) 平滑器，还能在参数极限下自然地内插 Wasserstein 几何与 Fisher-Rao 几何。
 
-其中 $\mathbb{Q}$ 是一个先验参考过程（如OU过程）的路径测度。此问题等价于一个随机控制问题，其解由一组耦合的非线性偏微分方程（薛定谔系统）描述。
+本仓库提供了一个高精度的**迭代比例拟合算法 (IPFP)** 实现，作为严格数值验证上述理论发现的核心工具。同时，我们也勾勒了一个基于神经网络的随机控制方法，作为扩展至高维问题的方向。
 
-本项目探索了两种求解该问题的范式：
-1.  **经典数值方法**：通过迭代比例拟合过程 (IPFP) 在离散网格上求解对偶问题。
-2.  **现代机器学习方法**：将问题转化为随机控制问题，并使用神经网络参数化控制策略进行端到端优化。
+## 架构亮点
 
-## 架构特色
-
-本项目的架构设计融合了学术研究的原则与现代机器学习工程实践。
+本项目的架构设计融合了学术研究的严谨性与现代机器学习的工程实践。
 
 1.  **双核求解器架构 (Dual-Core Solver Architecture)**
     *   **经典网格求解器 (`ipfp_1d.py`)**: 基于 Sinkhorn 算法的迭代比例拟合过程 (IPFP)，为低维问题提供高精度解，用于理论验证。
@@ -50,17 +48,17 @@ $$
 ## 安装
 
 ### 环境配置
-我们推荐使用 `pip` 管理依赖。要设置环境，请运行：
+我们推荐使用 `pip` 管理依赖。设置环境，请运行：
 ```bash
 # 安装依赖
 pip install -r requirements-cpu.txt requirements-gpu.txt
 ```
 
 ### 核心依赖
-*   **JAX Ecosystem**: `jax`, `jaxlib`, `flax`, `optax`, `chex`
-*   **Optimal Transport**: `ott-jax`
-*   **Scientific Computing**: `numpy`, `scipy`
-*   **Configuration**: `hydra-core`
+*   **JAX 生态**: `jax`, `jaxlib`, `flax`, `optax`, `chex`
+*   **最优运输**: `ott-jax`
+*   **科学计算**: `numpy`, `scipy`
+*   **配置**: `hydra-core`
 
 ### 运行核心测试
 为确保环境配置正确，请运行测试套件：
@@ -83,7 +81,6 @@ chmod +x automation/run_complete_validation_suite.sh
 ### 单个验证工作流
 您也可以独立运行每个验证工作流：
 *   **RTS等价性验证**: 验证MMSB解在特定条件下与Rauch-Tung-Striebel (RTS)平滑器的一致性。
-    ```bash
     ```bash
     ./automation/run_rts_equivalence_workflow.sh
     ```
