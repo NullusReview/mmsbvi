@@ -23,6 +23,9 @@ import time
 import pickle
 import pathlib
 
+# 导入积分器依赖
+from src.mmsbvi.integrators.integrators import create_integrator, BaseSDEIntegrator
+
 jax.config.update('jax_enable_x64', True)
 
 
@@ -76,62 +79,64 @@ class LargeAnglePendulumGenerator:
         self,
         params: Optional[PendulumParams] = None,
         dt: float = 0.01,
-        total_time: float = 10.0
+        total_time: float = 10.0,
+        integrator_method: str = "heun_ultra"  # 修正：默认使用极致优化的Heun积分器
     ):
         self.params = params or PendulumParams()
         self.dt = dt
         self.total_time = total_time
         self.n_steps = int(total_time / dt)
-        self._dynamics_step = jax.jit(self._dynamics_step_impl)
+        
+        # 创建并JIT编译积分器
+        self.integrator: BaseSDEIntegrator = create_integrator(integrator_method)
+        
+        # 将动力学函数绑定到实例
+        self.drift_fn = partial(self._pendulum_drift, self.params)
+        self.diffusion_fn = partial(self._pendulum_diffusion, self.params)
+        
+        # JIT编译轨迹生成函数
         self._generate_trajectory = jax.jit(self._generate_trajectory_impl)
 
-    @partial(jax.jit, static_argnums=(0,))
-    def _dynamics_step_impl(
-        self,
-        state: chex.Array,
-        t: float,
-        key: chex.PRNGKey
-    ) -> chex.Array:
-        """
-        单步动力学积分，包含可选的时变外部扭矩。
-        Single step dynamics integration, including optional time-varying external torque.
-        """
+    @staticmethod
+    def _pendulum_drift(params: PendulumParams, state: chex.Array, t: float) -> chex.Array:
+        """单摆的漂移函数 f(x, t)"""
         theta, omega = state[0], state[1]
-        p = self.params
+        external_torque = params.forcing_amplitude * jnp.sin(params.forcing_frequency * t)
+        d_theta = omega
+        d_omega = -(params.g / params.L) * jnp.sin(theta) - params.gamma * omega + external_torque
+        return jnp.array([d_theta, d_omega])
 
-        # 外部驱动力 (如果振幅>0)
-        external_torque = p.forcing_amplitude * jnp.sin(p.forcing_frequency * t)
+    @staticmethod
+    def _pendulum_diffusion(params: PendulumParams, state: chex.Array, t: float) -> chex.Array:
+        """单摆的扩散函数 g(x, t)"""
+        return jnp.array([0.0, params.sigma])
 
-        gravity_torque = -(p.g / p.L) * jnp.sin(theta)
-        damping_torque = -p.gamma * omega
-        noise_torque = p.sigma * random.normal(key) / jnp.sqrt(self.dt)
-
-        alpha = gravity_torque + damping_torque + external_torque + noise_torque
-        new_omega = omega + alpha * self.dt
-        new_theta = theta + new_omega * self.dt
-        new_theta = jnp.mod(new_theta + jnp.pi, 2 * jnp.pi) - jnp.pi
-
-        return jnp.array([new_theta, new_omega])
-
-    @partial(jax.jit, static_argnums=(0,))
     def _generate_trajectory_impl(
         self,
         initial_state: chex.Array,
         key: chex.PRNGKey
     ) -> Tuple[chex.Array, chex.Array]:
-        """生成完整轨迹 / Generate complete trajectory"""
-        times = jnp.arange(0, self.total_time, self.dt)
-        keys = random.split(key, self.n_steps)
+        """使用指定的积分器生成完整轨迹"""
+        times = jnp.arange(0, self.total_time + self.dt, self.dt)
+        
+        # 角度归一化函数
+        def normalize_angle_state(trajectory):
+            return trajectory.at[:, 0].set(
+                jnp.mod(trajectory[:, 0] + jnp.pi, 2 * jnp.pi) - jnp.pi
+            )
 
-        def step_fn(state, scan_input):
-            t, key_i = scan_input
-            next_state = self._dynamics_step_impl(state, t, key_i)
-            return next_state, next_state
-
-        final_state, trajectory = jax.lax.scan(step_fn, initial_state, (times, keys))
-        full_trajectory = jnp.concatenate([initial_state[None, :], trajectory], axis=0)
-        full_times = jnp.arange(0, self.total_time + self.dt, self.dt)
-        return full_times[:full_trajectory.shape[0]], full_trajectory
+        trajectory = self.integrator.integrate(
+            initial_state=initial_state,
+            drift_fn=self.drift_fn,
+            diffusion_fn=self.diffusion_fn,
+            time_grid=times,
+            key=key
+        )
+        
+        # 对生成的轨迹进行角度归一化
+        trajectory = normalize_angle_state(trajectory)
+        
+        return times, trajectory
 
     def generate_scenario(
         self,

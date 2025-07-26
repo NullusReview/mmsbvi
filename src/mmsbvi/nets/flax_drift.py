@@ -106,7 +106,7 @@ class TimeEncoder(nn.Module):
         Returns:
             encodings: Time encodings / 时间编码
         """
-        # 🔧 FIX: Robustly handle Python floats by converting to JAX array.
+        # FIX: Robustly handle Python floats by converting to JAX array.
         # This prevents the "'float' object has no attribute 'ndim'" error.
         # 修复：通过转换为JAX数组来稳健地处理Python浮点数。
         # 这可以防止“'float'对象没有'ndim'属性”的错误。

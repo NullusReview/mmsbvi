@@ -1,7 +1,7 @@
 """Neural Control Variational Solver for Multi-Marginal Schrödinger Bridge
 多边际薛定谔桥的神经控制变分求解器
 
-ULTRA HIGH-PERFORMANCE implementation with extreme optimizations:
+HIGH-PERFORMANCE implementation with optimizations:
 - JAX JIT compilation with static arguments for maximum speed
 - Vectorized batch processing with vmap/pmap parallelization
 - Memory-efficient gradient checkpointing and streaming
@@ -714,8 +714,8 @@ class DensityEstimator:
 @register_solver("control_grad")
 class PrimalControlGradFlowSolver:
     """
-    ULTRA HIGH-PERFORMANCE Neural Control Variational Solver
-    超高性能神经控制变分求解器
+    HIGH-PERFORMANCE Neural Control Variational Solver
+    高性能神经控制变分求解器
     
     This is the main orchestrator that coordinates all components / 这是协调所有组件的主要统筹器:
     - VariationalObjective: Loss function computation / 损失函数计算
